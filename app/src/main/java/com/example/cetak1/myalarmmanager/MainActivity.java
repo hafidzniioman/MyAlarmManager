@@ -11,11 +11,12 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private TextView tvOneTimeDate, tvOneTimeTime ;
     private TextView tvRepeatingTime;
     private EditText edtOneTimeMessage , edtRepeatingMessage;
@@ -40,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
         btnRepeatingTime = (Button)findViewById(R.id.btn_repeating_time_alarm_time);
         btnRepeating = (Button)findViewById(R.id.btn_repeating_time_alarm);
         btnCancelRepeatingAlarm = (Button)findViewById(R.id.btn_cancel_repeating_alarm);
+
         btnOneTimeDate.setOnClickListener(this);
         btnOneTimeTime.setOnClickListener(this);
         btnOneTime.setOnClickListener(this);
@@ -54,53 +56,86 @@ public class MainActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(alarmPreference.getOneTimeDate())){
             setOneTimeText();
         }
+        if (!TextUtils.isEmpty(alarmPreference.getRepeatingTime())){
+            setRepeatingText();
+        }
 
     }
     @Override
     public void onClick(View v) {
-        if (v.getId() == R.id.btn_one_time_alarm_date){
-            final Calendar currentDate = Calendar.getInstance();
-            new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
-                @Override
-                public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-                    calOneTimeDate.set(year, monthOfYear, dayOfMonth);
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                    tvOneTimeDate.setText(dateFormat.format(calOneTimeDate.getTime()));
-                }
-            }, currentDate.get(Calendar.YEAR), currentDate.get(Calendar.MONTH), currentDate.get(Calendar.DATE)).show();
+            if (v.getId() == R.id.btn_one_time_alarm_date) {
+                final Calendar currentDate = Calendar.getInstance();
+                new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
+                    @Override
+                    public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                        calOneTimeDate.set(year, monthOfYear, dayOfMonth);
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                        tvOneTimeDate.setText(dateFormat.format(calOneTimeDate.getTime()));
+                    }
+                }, currentDate.get(Calendar.YEAR), currentDate.get(Calendar.MONTH), currentDate.get(Calendar.DATE)).show();
+            } else if (v.getId() == R.id.btn_one_time_alarm_time) {
+                final Calendar currentDate = Calendar.getInstance();
+                new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                        calOneTimeTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                        calOneTimeTime.set(Calendar.MINUTE, minute);
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
+                        tvOneTimeTime.setText(dateFormat.format(calOneTimeTime.getTime()));
+                    }
+                }, currentDate.get(Calendar.HOUR_OF_DAY), currentDate.get(Calendar.MINUTE), true).show();
+
+            } else if (v.getId() == R.id.btn_repeating_time_alarm_time) {
+                final Calendar currentDate = Calendar.getInstance();
+                new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                        calRepeatTimeTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                        calRepeatTimeTime.set(Calendar.MINUTE, minute);
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
+                        tvRepeatingTime.setText(dateFormat.format(calRepeatTimeTime.getTime()));
+                        //Log.v(TAG, "The choosen one " + date.getTime());
+                    }
+                }, currentDate.get(Calendar.HOUR_OF_DAY), currentDate.get(Calendar.MINUTE), true).show();
+            } else if (v.getId() == R.id.btn_set_one_time_alarm) {
+
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                String oneTimeDate = dateFormat.format(calOneTimeDate.getTime());
+                SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+                String oneTimeTime = timeFormat.format(calOneTimeTime.getTime());
+                String oneTimeMessage = edtOneTimeMessage.getText().toString();
+
+                alarmPreference.setOneTimeDate(oneTimeDate);
+                alarmPreference.setOneTimeMessage(oneTimeMessage);
+                alarmPreference.setOneTimeTime(oneTimeTime);
+
+                //setOneTimeText();
+                alarmReceiver.setOneTimeAlarm(this, AlarmReceiver.TYPE_ONE_TIME,
+                        alarmPreference.getOneTimeDate(),
+                        alarmPreference.getOneTimeTime(),
+                        alarmPreference.getOneTimeMessage());
+
+            } else if (v.getId() == R.id.btn_repeating_time_alarm) {
+                SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+                String repeatTimeTime = timeFormat.format(calRepeatTimeTime.getTime());
+                String repeatTimeMessage = edtRepeatingMessage.getText().toString();
+                alarmPreference.setRepeatingTime(repeatTimeTime);
+                alarmPreference.setRepeatingMessage(repeatTimeMessage);
+                alarmReceiver.setRepeatingAlarm(this, AlarmReceiver.TYPE_REPEATING,
+                        alarmPreference.getRepeatingTime(), alarmPreference.getRepeatingMessage());
+            } else if (v.getId() == R.id.btn_cancel_repeating_alarm) {
+                alarmReceiver.cancelAlarm(this, AlarmReceiver.TYPE_REPEATING);
+            }
         }
-        else if (v.getId() == R.id.btn_one_time_alarm_time){
-            final Calendar currentDate = Calendar.getInstance();
-            new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
-                @Override
-                public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                    calOneTimeTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
-                    calOneTimeTime.set(Calendar.MINUTE, minute);
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
-                    tvOneTimeTime.setText(dateFormat.format(calOneTimeTime.getTime()));
-                    //Log.v(TAG, "The choosen one " + date.getTime());
-                }
-            }, currentDate.get(Calendar.HOUR_OF_DAY), currentDate.get(Calendar.MINUTE), true).show();
-        }
-        else if (v.getId() == R.id.btn_set_one_time_alarm){
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-            String oneTimeDate = dateFormat.format(calOneTimeDate.getTime());
-            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
-            String oneTimeTime = timeFormat.format(calOneTimeTime.getTime());
-            String oneTimeMessage = edtOneTimeMessage.getText().toString();
-            alarmPreference.setOneTimeDate(oneTimeDate);
-            alarmPreference.setOneTimeMessage(oneTimeMessage);
-            alarmPreference.setOneTimeTime(oneTimeTime);
-            alarmReceiver.setOneTimeAlarm(this, AlarmReceiver.TYPE_ONE_TIME,
-                    alarmPreference.getOneTimeDate(),
-                    alarmPreference.getOneTimeTime(),
-                    alarmPreference.getOneTimeMessage());
-        }
-    }
 
     private void setOneTimeText() {
         tvOneTimeTime.setText(alarmPreference.getOneTimeTime());
         tvOneTimeDate.setText(alarmPreference.getOneTimeDate());
         edtOneTimeMessage.setText(alarmPreference.getOneTimeMessage());
+    }
+
+    private void setRepeatingText(){
+        tvRepeatingTime.setText(alarmPreference.getRepeatingTime());
+        edtRepeatingMessage.setText(alarmPreference.getRepeatingMessage());
     }
 }

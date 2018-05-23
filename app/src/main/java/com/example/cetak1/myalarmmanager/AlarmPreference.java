@@ -4,8 +4,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 public class AlarmPreference {
-    private final String PREF_NAME = "ALARM_PREFERENCE";
-    private final String KEY_ONE_TIME_DATE = = "oneTimDate";
+    private final String PREF_NAME = "AlarmPreference";
+    private final String KEY_ONE_TIME_DATE = "oneTimDate";
     private final String KEY_ONE_TIME_TIME = "oneTimeTime";
     private final String KEY_ONE_TIME_MESSAGE = "oneTimeMessage";
     private final String KEY_REPEATING_TIME = "repeatingTime";
@@ -55,5 +55,4 @@ public class AlarmPreference {
         editor.clear();
         editor.commit();
     }
-}
 }
